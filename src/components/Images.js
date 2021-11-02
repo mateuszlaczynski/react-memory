@@ -1,6 +1,7 @@
 import {useState, useEffect} from 'react';
 import {useParams} from 'react-router-dom'
 import card from '../assets/images/card.png'
+import checked from '../assets/images/checked.png'
 import {Link} from "react-router-dom";
 
 const data = [
@@ -140,6 +141,7 @@ const data = [
 const Images = () => {
     const {number} = useParams()
     const [deck, setDeck] = useState(data);
+    const [cardsLeft, setCardsLeft] = useState(1);
     const [cardDepo, setCardDepo] = useState([]);
     const [moves, setMoves] = useState(0);
     const [timer, setTimer] = useState(0);
@@ -152,22 +154,24 @@ const Images = () => {
     }, [number]);
 
     useEffect(() => {
-        if (deck.length === 0 && moves > 1) {
+        if (cardsLeft === 0 && moves > 1) {
             setTimerOn(false);
             let pointsEarned = points;
             let timeNeededToWin = timer;
             let movesNeededToWin = moves;
-            pointsEarned = Math.floor(timeNeededToWin / movesNeededToWin * 1000);
+            pointsEarned = Math.floor(movesNeededToWin / timeNeededToWin * 1000);
             setPoints(pointsEarned);
         }
-    }, [deck]);
+    }, [cardsLeft]);
 
     const setCards = (number) => {
         let tempDeck = [...deck];
+        let tempCardsLeft = [...number]
         tempDeck.splice(number, deck.length);
         shuffle(tempDeck);
         setDeck(tempDeck);
         setTimerOn(true);
+        setCardsLeft(tempCardsLeft)
     };
 
 
@@ -230,45 +234,53 @@ const Images = () => {
     }
 
     const checkCards = () => {
-        let img1 = cardDepo[0]
-        let img2 = cardDepo[1]
-        const filteredDeck = deck.filter(card => {
-            return card.src !== img1.src && card.src !== img2.src
+        let tempDeck = [...deck]
+        tempDeck.map((object) => {
+            if (object.src === cardDepo[0].src || object.src === cardDepo[1].src) {
+                object.src = null
+            }
         })
-            setDeck(filteredDeck)
-            setCardDepo([])
-            addMove()
-            console.log(deck)
-      }
+        let tempCardsLeft = cardsLeft
+        tempCardsLeft = tempCardsLeft - 2
+        setCardDepo([])
+        setDeck(tempDeck)
+        setCardsLeft(tempCardsLeft)
+        addMove()
+        console.log(tempCardsLeft)
+    }
 
     return (
         <>
         <div className="game-header">
-            {timerOn && <><h1>Moves: {moves}</h1>
-            <Link to='/'>
-                <button className="btn">Go Back</button>
-            </Link> </>}
+            {timerOn && <h1>Moves: {moves}</h1>}
         </div>
 
         <div className="img-container">
             {deck.length != number &&  moves < 1 && <h1 style={{textAlign:'center'}}>Loading...</h1>}
-            {deck.length === 0 && moves > 0 && [
+            {cardsLeft === 0 && moves > 0 && [
             <div className="home-page">
                 <h1>
                     You have won!<br/>
                     You got: {points} points in {moves} moves! <br/>
                     It took you {Math.floor(timer/60)}:{timer%60}min
                 </h1>
-                <Link to='/'>
-                    <button className="btn">Main Menu</button>
-                </Link>
             </div>]}
            {timerOn && deck.map((object) => {
                return (
-                    <div className="img-div" key={object.id}> 
-                             <img src={card} className="img-card" id={object.id} onClick={() => showCard(object)} alt=""/>
-                    </div>
-               )
+                        <>
+                            {object.src === null && [
+                                <div className="img-div" key={object.id}> 
+                                    <img src={checked} alt=""/>
+                                </div>
+                            ]}
+                            {object.src !== null && [
+                                <div className="img-div" key={object.id}> 
+                                    <img src={card} className="img-card" id={object.id} onClick={() => showCard(object)} alt=""/>
+                                </div>
+                            ]}
+
+                        </>
+                )
             })}
            
 
